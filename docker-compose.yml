@@ -1,0 +1,75 @@
+version: "3"
+
+services:
+  app:
+    image: laravel-www
+    container_name: laravel-www
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      - redis
+      - mysql
+    env_file:
+      - .docker.env
+    volumes:
+      - .:/var/www/html
+    ports:
+      - 8080:80
+    environment:
+      CONTAINER_ROLE: app
+
+  scheduler:
+    image: laravel-www
+    container_name: laravel-scheduler
+    depends_on:
+      - app
+      - redis
+      - mysql
+    env_file:
+      - .docker.env
+    volumes:
+      - .:/var/www/html
+    environment:
+      CONTAINER_ROLE: scheduler
+
+  queue:
+    image: laravel-www
+    container_name: laravel-queue
+    depends_on:
+      - app
+      - redis
+      - mysql
+    env_file:
+      - .docker.env
+    volumes:
+      - .:/var/www/html
+    environment:
+      CONTAINER_ROLE: queue
+
+  redis:
+    container_name: laravel-redis
+    image: redis:5-alpine
+    ports:
+      - 16379:6379
+    volumes:
+      - redis:/data
+
+  mysql:
+    container_name: laravel-mysql
+    image: mysql:5.7
+    ports:
+      - 13306:3306
+    volumes:
+      - mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: homestead
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: homestead
+      MYSQL_PASSWORD: secret
+
+volumes:
+  redis:
+    driver: "local"
+  mysql:
+    driver: "local"
